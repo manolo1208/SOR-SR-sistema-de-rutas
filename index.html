@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SOR-SR - Sistema de Optimización de Rutas</title>
+
+  <!-- Leaflet -->
+  <link href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" rel="stylesheet"/>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+  <!-- Leaflet MarkerCluster -->
+  <link href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" rel="stylesheet"/>
+  <link href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" rel="stylesheet"/>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+
+  <!-- Librerías externas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      margin: 0; padding: 0; color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 15px;
+    }
+    .header {
+      background: white;
+      padding: 15px 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .header h1 {
+      font-size: 2em;
+      color: #2c3e50;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+    }
+    .control-panel, .map-container {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    #map {
+      height: 450px;
+      border-radius: 15px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .stat-card .value {
+      font-size: 1.7em;
+      font-weight: bold;
+    }
+    .btn {
+      background: linear-gradient(45deg, #3498db, #2980b9);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 25px;
+      border: none;
+      font-size: 0.9em;
+      cursor: pointer;
+      margin: 4px 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      font-weight: 600;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid #ecf0f1;
+    }
+    .section h3 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 6px;
+    }
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #27ae60;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      opacity: 0;
+      z-index: 1001;
+      transition: all 0.3s ease;
+    }
+    .notification.show {
+      opacity: 1;
+    }
+    .notification.error { background: #e74c3c; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><i class="fas fa-route"></i> SOR-SR</h1>
+    <p><i class="fas fa-user-shield"></i> Bienvenido, redecol</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="value" id="activeRoutes">0</div><div class="label">Rutas Activas</div></div>
+    <div class="stat-card"><div class="value" id="coverage">0%</div><div class="label">Cobertura</div></div>
+    <div class="stat-card"><div class="value" id="efficiency">0%</div><div class="label">Eficiencia</div></div>
+  </div>
+
+  <div class="main-grid">
+    <div class="control-panel">
+      <div class="section">
+        <h3><i class="fas fa-map-marked-alt"></i> Planificación de Rutas</h3>
+        <div class="form-group">
+          <label for="routeName">Nombre de la Ruta:</label>
+          <input type="text" id="routeName" placeholder="Ej: Zona Norte">
+        </div>
+        <div class="form-group">
+          <label for="assignedRecycler">Reciclador Asignado:</label>
+          <select id="assignedRecycler">
+            <option value="">Seleccionar reciclador</option>
+            <option value="1">Blanca Camacho Alfonso</option>
+            <option value="2">Hernando Alfonso Carrillo</option>
+            <option value="3">Adriano Castro Vega</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="vehicleType">Tipo de Vehículo:</label>
+          <select id="vehicleType">
+            <option value="cart">Carretilla</option>
+            <option value="bicycle">Bicicleta</option>
+            <option value="motorcycle">Motocicleta</option>
+            <option value="truck">Camión</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="barriosRuta">Barrios de la Ruta:</label>
+          <textarea id="barriosRuta" rows="2"></textarea>
+        </div>
+        <button class="btn" onclick="createRoute()"><i class="fas fa-route"></i> Crear Ruta</button>
+        <hr>
+        <h3><i class="fas fa-file-upload"></i> Importar Recorrido (CSV)</h3>
+        <div class="form-group">
+          <label for="archivoRuta">Archivo de coordenadas (.csv):</label>
+          <input type="file" id="archivoRuta" accept=".csv">
+        </div>
+        <button class="btn" onclick="calcularCoberturaDesdeCSV()"><i class="fas fa-check-circle"></i> Calcular cobertura desde archivo</button>
+        <div id="resultadoCobertura" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="section">
+        <h3><i class="fas fa-download"></i> Exportar Datos</h3>
+        <button class="btn" onclick="downloadCoverageData()"><i class="fas fa-file-excel"></i> Descargar Excel</button>
+        <button class="btn" onclick="generateReportPDF()"><i class="fas fa-file-pdf"></i> Generar PDF</button>
+        <button class="btn" onclick="exportMapAsImage()"><i class="fas fa-image"></i> Exportar Mapa</button>
+      </div>
+    </div>
+
+    <div class="map-container">
+      <h3><i class="fas fa-map"></i> Mapa de Seguimiento</h3>
+      <div id="map"></div>
+    </div>
+  </div>
+</div>
+
+<div class="notification" id="notification"></div>
+
+<script>
+let map, markersCluster, routes = [], trackedPoints = [];
+
+function initMap() {
+  map = L.map('map').setView([7.0649, -73.8542], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  markersCluster = L.markerClusterGroup().addTo(map);
+  updateStats();
+}
+
+function getVehicleIcon(type) {
+  const icons = { cart: '🛒', bicycle: '🚲', motorcycle: '🏍️', truck: '🚛' };
+  return icons[type] || '🚗';
+}
+
+function createRoute() {
+  const name = document.getElementById('routeName').value;
+  const recycler = document.getElementById('assignedRecycler').selectedOptions[0].text;
+  const vehicle = document.getElementById('vehicleType').value;
+  const barrios = document.getElementById('barriosRuta').value;
+  if (!name || !recycler) return showNotification('Completa todos los campos', 'error');
+  routes.push({ name, recycler, vehicle, barrios });
+  updateStats();
+  showNotification('Ruta creada', 'success');
+}
+
+function updateStats() {
+  const coverage = Math.min(100, Math.round((trackedPoints.length / 70000) * 100));
+  document.getElementById('coverage').textContent = coverage + '%';
+  document.getElementById('efficiency').textContent = coverage + '%';
+  document.getElementById('activeRoutes').textContent = routes.length;
+}
+
+function calcularCoberturaDesdeCSV() {
+  const input = document.getElementById('archivoRuta');
+  const resultado = document.getElementById('resultadoCobertura');
+  if (!input.files.length) return showNotification('Selecciona un archivo .csv', 'error');
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const data = e.target.result.split('\n');
+    const puntos = [];
+    for (let i = 1; i < data.length; i++) {
+      const [lat, lng] = data[i].split(',').map(Number);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        puntos.push({ lat, lng });
+        L.circleMarker([lat, lng], { radius: 4, color: "#2ecc71" }).addTo(map);
+        trackedPoints.push({ lat, lng });
+      }
+    }
+    const cobertura = Math.min(100, Math.round((puntos.length / 70000) * 100));
+    resultado.innerHTML = `✔ <b>${puntos.length}</b> usuarios cargados<br>📊 Cobertura: <b>${cobertura}%</b>`;
+    updateStats();
+    showNotification('Archivo procesado', 'success');
+  };
+  reader.readAsText(input.files[0]);
+}
+
+function downloadCoverageData() {
+  if (!trackedPoints.length) return showNotification('No hay datos', 'error');
+  const ws = XLSX.utils.json_to_sheet(trackedPoints);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Recorrido');
+  XLSX.writeFile(wb, 'recorrido.xlsx');
+  showNotification('Excel descargado', 'success');
+}
+
+function generateReportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18).text('REPORTE - SOR-SR', 105, 20, { align: 'center' });
+  doc.setFontSize(12).text(`Rutas activas: ${routes.length}`, 20, 40);
+  doc.text(`Puntos registrados: ${trackedPoints.length}`, 20, 50);
+  doc.save('reporte_sor-sr.pdf');
+  showNotification('PDF generado', 'success');
+}
+
+function exportMapAsImage() {
+  html2canvas(document.getElementById('map')).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'mapa.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
+
+function showNotification(msg, type) {
+  const n = document.getElementById('notification');
+  n.textContent = msg;
+  n.className = `notification ${type} show`;
+  setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+document.addEventListener('DOMContentLoaded', initMap);
+</script>
+</body>
+</html>

@@ -5,296 +5,499 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SOR-SR - Sistema de Optimización de Rutas</title>
 
-  <!-- Leaflet -->
-  <link href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" rel="stylesheet"/>
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-
-  <!-- Leaflet MarkerCluster -->
-  <link href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" rel="stylesheet"/>
-  <link href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" rel="stylesheet"/>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-
+  <!-- Leaflet CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css " rel="stylesheet"/>
+  
   <!-- Font Awesome -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css " rel="stylesheet"/>
+  
+  <!-- MarkerCluster -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css " />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css " />
 
-  <!-- Librerías externas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Librerías -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js "></script>
+  <script src="https://cdn.jsdelivr.net/npm/ @emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js "></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js "></script>
 
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      margin: 0; padding: 0; color: #333;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+      margin: 0;
     }
     .container {
-      max-width: 1200px;
-      margin: auto;
-      padding: 15px;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
     }
     .header {
-      background: white;
-      padding: 15px 20px;
-      border-radius: 15px;
-      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 20px 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
     .header h1 {
-      font-size: 2em;
       color: #2c3e50;
+      font-size: 2.5em;
+      margin-bottom: 10px;
     }
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 2fr;
-      gap: 20px;
+      gap: 30px;
+      margin-bottom: 30px;
     }
-    .control-panel, .map-container {
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    .control-panel {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    .map-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
     #map {
-      height: 450px;
+      height: 500px;
       border-radius: 15px;
     }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
+    .section {
+      margin-bottom: 30px;
     }
-    .stat-card {
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-    .stat-card .value {
-      font-size: 1.7em;
-      font-weight: bold;
+    .section h3 {
+      color: #2c3e50;
+      font-size: 1.4em;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #3498db;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     .btn {
       background: linear-gradient(45deg, #3498db, #2980b9);
       color: white;
-      padding: 10px 20px;
-      border-radius: 25px;
       border: none;
-      font-size: 0.9em;
+      padding: 12px 24px;
+      border-radius: 25px;
       cursor: pointer;
-      margin: 4px 0;
+      font-size: 1em;
+      transition: all 0.3s ease;
+      margin: 5px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-    }
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      gap: 8px;
     }
     .form-group {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
     .form-group label {
+      display: block;
+      margin-bottom: 5px;
       font-weight: 600;
+      color: #2c3e50;
     }
-    .form-group input, .form-group select, .form-group textarea {
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
       width: 100%;
-      padding: 10px;
-      border-radius: 10px;
+      padding: 12px;
       border: 2px solid #ecf0f1;
+      border-radius: 10px;
+      font-size: 1em;
+      transition: all 0.3s ease;
     }
-    .section h3 {
-      font-size: 1.2em;
-      margin-bottom: 10px;
-      border-bottom: 2px solid #3498db;
-      padding-bottom: 6px;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
     .notification {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: #27ae60;
-      color: white;
-      padding: 12px 20px;
+      padding: 15px 25px;
       border-radius: 10px;
+      color: white;
       font-weight: 600;
-      opacity: 0;
       z-index: 1001;
+      opacity: 0;
+      transform: translateX(400px);
       transition: all 0.3s ease;
     }
     .notification.show {
       opacity: 1;
+      transform: translateX(0);
     }
-    .notification.error { background: #e74c3c; }
+    .notification.success {
+      background: #27ae60;
+    }
+    .notification.error {
+      background: #e74c3c;
+    }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1><i class="fas fa-route"></i> SOR-SR</h1>
-    <p><i class="fas fa-user-shield"></i> Bienvenido, redecol</p>
-  </div>
 
-  <div class="stats-grid">
-    <div class="stat-card"><div class="value" id="activeRoutes">0</div><div class="label">Rutas Activas</div></div>
-    <div class="stat-card"><div class="value" id="coverage">0%</div><div class="label">Cobertura</div></div>
-    <div class="stat-card"><div class="value" id="efficiency">0%</div><div class="label">Eficiencia</div></div>
-  </div>
-
-  <div class="main-grid">
-    <div class="control-panel">
-      <div class="section">
-        <h3><i class="fas fa-map-marked-alt"></i> Planificación de Rutas</h3>
-        <div class="form-group">
-          <label for="routeName">Nombre de la Ruta:</label>
-          <input type="text" id="routeName" placeholder="Ej: Zona Norte">
-        </div>
-        <div class="form-group">
-          <label for="assignedRecycler">Reciclador Asignado:</label>
-          <select id="assignedRecycler">
-            <option value="">Seleccionar reciclador</option>
-            <option value="1">Blanca Camacho Alfonso</option>
-            <option value="2">Hernando Alfonso Carrillo</option>
-            <option value="3">Adriano Castro Vega</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="vehicleType">Tipo de Vehículo:</label>
-          <select id="vehicleType">
-            <option value="cart">Carretilla</option>
-            <option value="bicycle">Bicicleta</option>
-            <option value="motorcycle">Motocicleta</option>
-            <option value="truck">Camión</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="barriosRuta">Barrios de la Ruta:</label>
-          <textarea id="barriosRuta" rows="2"></textarea>
-        </div>
-        <button class="btn" onclick="createRoute()"><i class="fas fa-route"></i> Crear Ruta</button>
-        <hr>
-        <h3><i class="fas fa-file-upload"></i> Importar Recorrido (CSV)</h3>
-        <div class="form-group">
-          <label for="archivoRuta">Archivo de coordenadas (.csv):</label>
-          <input type="file" id="archivoRuta" accept=".csv">
-        </div>
-        <button class="btn" onclick="calcularCoberturaDesdeCSV()"><i class="fas fa-check-circle"></i> Calcular cobertura desde archivo</button>
-        <div id="resultadoCobertura" style="margin-top:10px;"></div>
+  <!-- Contenido Principal -->
+  <div id="appContent" style="display: block;">
+    <div class="container">
+      <div class="header">
+        <h1><i class="fas fa-route"></i> SOR-SR</h1>
+        <p><i class="fas fa-user-shield"></i> Bienvenido, redecol</p>
       </div>
-
-      <div class="section">
-        <h3><i class="fas fa-download"></i> Exportar Datos</h3>
-        <button class="btn" onclick="downloadCoverageData()"><i class="fas fa-file-excel"></i> Descargar Excel</button>
-        <button class="btn" onclick="generateReportPDF()"><i class="fas fa-file-pdf"></i> Generar PDF</button>
-        <button class="btn" onclick="exportMapAsImage()"><i class="fas fa-image"></i> Exportar Mapa</button>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="icon"><i class="fas fa-route"></i></div>
+          <div class="value" id="activeRoutes">0</div>
+          <div class="label">Rutas Activas</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon"><i class="fas fa-users"></i></div>
+          <div class="value" id="coverage">0%</div>
+          <div class="label">Cobertura</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon"><i class="fas fa-chart-line"></i></div>
+          <div class="value" id="efficiency">0%</div>
+          <div class="label">Eficiencia</div>
+        </div>
+      </div>
+      <div class="main-grid">
+        <div class="control-panel">
+          <div class="section">
+            <h3><i class="fas fa-map-marked-alt"></i> Planificación de Rutas</h3>
+            <div class="form-group">
+              <label for="routeName">Nombre de la Ruta:</label>
+              <input type="text" id="routeName" placeholder="Ej: Zona Norte - Mañana">
+            </div>
+            <div class="form-group">
+              <label for="assignedRecycler">Reciclador Asignado:</label>
+              <select id="assignedRecycler">
+                <option value="">Seleccionar reciclador</option>
+                <option value="1">Blanca Camacho Alfonso</option>
+                <option value="2">Hernando Alfonso Carrillo Murillo</option>
+                <option value="3">Adriano Castro Vega</option>
+                <option value="4">Noralba Arias Rivera</option>
+                <option value="5">Leonor De Jesús Orozco Suarez</option>
+                <option value="6">Wilson José Ravelo Díaz</option>
+                <option value="7">Talía Gomez Fuentes</option>
+                <option value="8">José Manuel Díaz Agudelo</option>
+                <option value="9">Abel Antonio Muñoz Macías</option>
+                <option value="10">Atilano Meneses Polo</option>
+                <option value="11">Teresa De Jesus Isaza</option>
+                <option value="12">Guillermo Quintero Cortes</option>
+                <option value="13">Buenaventura Quintero Cortes</option>
+                <option value="14">Jorge Iván Londoño Gómez</option>
+                <option value="15">Omar Antonio Mejía Franco</option>
+                <option value="16">Teresa del Carmen Díaz Meza</option>
+                <option value="17">Bernardino Morales Flores</option>
+                <option value="18">Sanín Enrique Díaz Meza</option>
+                <option value="19">Dagoberto Díaz Meza</option>
+                <option value="20">Luz Dary Agudelo Rodriguez</option>
+                <option value="21">Manuel Antonio Rodriguez Guardia</option>
+                <option value="22">Maria Edith Echeverri Villa</option>
+                <option value="23">Luz Herminia Aguilera Vargas</option>
+                <option value="24">Campo Elias Rueda Niño</option>
+                <option value="25">Laniker De Jesús Diaz Agudelo</option>
+                <option value="26">Rodolfo Rico Barroso</option>
+                <option value="27">Henry Diaz</option>
+                <option value="28">Karina Alexandra Meneses Garcia</option>
+                <option value="29">Madeleine Diaz Barraza</option>
+                <option value="30">Maria Camila Soto Moreno</option>
+                <option value="31">Alvaro Barragan</option>
+                <option value="32">Mario Rafael Guerra</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="vehicleType">Tipo de Vehículo:</label>
+              <select id="vehicleType">
+                <option value="cart">Carretilla</option>
+                <option value="bicycle">Bicicleta</option>
+                <option value="motorcycle">Motocicleta</option>
+                <option value="truck">Camión</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="barriosRuta">Barrios de la Ruta:</label>
+              <textarea id="barriosRuta" placeholder="Ej: El Centro, Primero de Mayo, La Paz" rows="2"></textarea>
+            </div>
+            <button class="btn success" onclick="createRoute()" style="width: 100%;">
+              <i class="fas fa-route"></i> Crear Ruta
+            </button>
+          </div>
+          <div class="section">
+            <h3><i class="fas fa-download"></i> Exportar Datos</h3>
+            <button class="btn warning" onclick="downloadCoverageData()">
+              <i class="fas fa-file-excel"></i> Descargar Recorrido (Excel)
+            </button>
+            <button class="btn warning" onclick="generateReportPDF()">
+              <i class="fas fa-file-pdf"></i> Generar Reporte (PDF)
+            </button>
+            <button class="btn warning" onclick="exportMapAsImage()">
+              <i class="fas fa-image"></i> Exportar Mapa como Imagen
+            </button>
+          </div>
+          <div class="section">
+            <h3><i class="fas fa-comments"></i> Contacto Directo</h3>
+            <a href="https://wa.me/573123387813 " target="_blank" class="btn success">
+              <i class="fab fa-whatsapp"></i> Canal 1: 312 338 7813
+            </a>
+            <a href="https://wa.me/573202686047 " target="_blank" class="btn success">
+              <i class="fab fa-whatsapp"></i> Canal 2: 320 268 6047
+            </a>
+          </div>
+        </div>
+        <div class="map-container">
+          <h3><i class="fas fa-map"></i> Mapa de Seguimiento</h3>
+          <div id="map"></div>
+        </div>
       </div>
     </div>
-
-    <div class="map-container">
-      <h3><i class="fas fa-map"></i> Mapa de Seguimiento</h3>
-      <div id="map"></div>
-    </div>
   </div>
-</div>
 
-<div class="notification" id="notification"></div>
+  <!-- Notificaciones -->
+  <div class="notification" id="notification"></div>
 
-<script>
-let map, markersCluster, routes = [], trackedPoints = [];
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js "></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js "></script>
+  <script>
+    // Variables globales
+    let map;
+    let routes = [];
+    let trackedPoints = [];
+    let markersCluster = null;
+    let recorridoPolyline = null;
+    let currentUser = { name: 'redecol', role: 'admin' };
 
-function initMap() {
-  map = L.map('map').setView([7.0649, -73.8542], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-  markersCluster = L.markerClusterGroup().addTo(map);
-  updateStats();
-}
+    // Inicializar mapa
+    function initMap() {
+      map = L.map('map', { preferCanvas: true }).setView([7.0649, -73.8542], 13);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors, © CARTO'
+      }).addTo(map);
+      generateSimulatedUsers(50);
+    }
 
-function getVehicleIcon(type) {
-  const icons = { cart: '🛒', bicycle: '🚲', motorcycle: '🏍️', truck: '🚛' };
-  return icons[type] || '🚗';
-}
+    // Obtener ícono de vehículo
+    function getVehicleIcon(tipo) {
+      return {
+        cart: '🛒',
+        bicycle: '🚲',
+        motorcycle: '🏍️',
+        truck: '🚛'
+      }[tipo] || '🚗';
+    }
 
-function createRoute() {
-  const name = document.getElementById('routeName').value;
-  const recycler = document.getElementById('assignedRecycler').selectedOptions[0].text;
-  const vehicle = document.getElementById('vehicleType').value;
-  const barrios = document.getElementById('barriosRuta').value;
-  if (!name || !recycler) return showNotification('Completa todos los campos', 'error');
-  routes.push({ name, recycler, vehicle, barrios });
-  updateStats();
-  showNotification('Ruta creada', 'success');
-}
+    // Crear nueva ruta
+    function createRoute() {
+      const routeName = document.getElementById('routeName').value;
+      const assignedRecycler = document.getElementById('assignedRecycler').value;
+      const vehicleType = document.getElementById('vehicleType').value;
+      const barriosRuta = document.getElementById('barriosRuta').value;
 
-function updateStats() {
-  const coverage = Math.min(100, Math.round((trackedPoints.length / 70000) * 100));
-  document.getElementById('coverage').textContent = coverage + '%';
-  document.getElementById('efficiency').textContent = coverage + '%';
-  document.getElementById('activeRoutes').textContent = routes.length;
-}
+      if (!routeName || !assignedRecycler) {
+        showNotification('Por favor completa todos los campos', 'error');
+        return;
+      }
 
-function calcularCoberturaDesdeCSV() {
-  const input = document.getElementById('archivoRuta');
-  const resultado = document.getElementById('resultadoCobertura');
-  if (!input.files.length) return showNotification('Selecciona un archivo .csv', 'error');
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const data = e.target.result.split('\n');
-    const puntos = [];
-    for (let i = 1; i < data.length; i++) {
-      const [lat, lng] = data[i].split(',').map(Number);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        puntos.push({ lat, lng });
-        L.circleMarker([lat, lng], { radius: 4, color: "#2ecc71" }).addTo(map);
-        trackedPoints.push({ lat, lng });
+      const newRoute = {
+        id: Date.now(),
+        name: routeName,
+        recycler: document.getElementById('assignedRecycler').options[assignedRecycler].text,
+        vehicle: vehicleType,
+        barrios: barriosRuta,
+        status: 'active',
+        gpsMarker: null
+      };
+
+      routes.push(newRoute);
+
+      const iconoVehiculo = L.divIcon({
+        html: `<div style="font-size: 24px;">${getVehicleIcon(vehicleType)}</div>`,
+        className: '',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      const marker = L.marker([7.0649, -73.8542], { icon: iconoVehiculo })
+        .addTo(map)
+        .bindPopup(`<b>${routeName}</b><br>Reciclador: ${newRoute.recycler}`);
+      newRoute.gpsMarker = marker;
+
+      updateStats();
+      showNotification('Ruta creada exitosamente', 'success');
+    }
+
+    // Simular seguimiento GPS
+    function simulateGPSTracking() {
+      const activeRoutes = routes.filter(r => r.status === 'active');
+      activeRoutes.forEach(route => {
+        if (!route.gpsMarker) return;
+        const currentPos = route.gpsMarker.getLatLng();
+        const newLat = parseFloat((currentPos.lat + (Math.random() - 0.5) * 0.001).toFixed(6));
+        const newLng = parseFloat((currentPos.lng + (Math.random() - 0.5) * 0.001).toFixed(6));
+        route.gpsMarker.setLatLng([newLat, newLng]);
+        trackedPoints.push({ lat: newLat, lng: newLng, timestamp: new Date().toISOString() });
+      });
+      dibujarRecorridoEnVivo();
+      updateStats();
+    }
+
+    // Calcular cobertura
+    function calculateCoverage() {
+      const totalUsers = 70000;
+      const coveredUsers = trackedPoints.length;
+      return Math.min(100, Math.round((coveredUsers / totalUsers) * 100));
+    }
+
+    // Actualizar estadísticas
+    function updateStats() {
+      document.getElementById('activeRoutes').textContent = routes.length;
+      const coverage = calculateCoverage();
+      document.getElementById('efficiency').textContent = coverage + '%';
+      document.getElementById('coverage').textContent = coverage + '%';
+    }
+
+    // Generar usuarios simulados
+    function generateSimulatedUsers(count = 50) {
+      const centerLat = 7.0649;
+      const centerLng = -73.8542;
+      const radius = 0.02;
+      markersCluster = L.markerClusterGroup();
+      for (let i = 0; i < count; i++) {
+        const lat = centerLat + (Math.random() - 0.5) * radius * 2;
+        const lng = centerLng + (Math.random() - 0.5) * radius * 2;
+        const userIcon = L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/1163/1163661.png ',
+          iconSize: [12, 12],
+          iconAnchor: [6, 6]
+        });
+        const marker = L.marker([lat, lng], { icon: userIcon });
+        markersCluster.addLayer(marker);
+      }
+      map.addLayer(markersCluster);
+    }
+
+    // Mostrar notificaciones
+    function showNotification(message, type) {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.classList.add('show');
+      setTimeout(() => notification.classList.remove('show'), 3000);
+    }
+
+    // Descargar datos de recorrido
+    function downloadCoverageData() {
+      if (trackedPoints.length === 0) {
+        showNotification('No hay datos para descargar', 'error');
+        return;
+      }
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        ['Latitud', 'Longitud', 'Fecha'],
+        ...trackedPoints.map(p => [p.lat, p.lng, p.timestamp])
+      ]);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Recorrido');
+      XLSX.writeFile(workbook, `recorrido_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      showNotification('Datos descargados exitosamente', 'success');
+    }
+
+    // Generar reporte PDF
+    function generateReportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text('REPORTE DE SEGUIMIENTO - SOR-SR', 105, 20, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`Generado por: redecol`, 20, 40);
+      doc.text(`Fecha: ${new Date().toLocaleString('es-CO')}`, 20, 50);
+      doc.text(`Rutas activas: ${routes.length}`, 20, 60);
+      doc.text(`Puntos registrados: ${trackedPoints.length}`, 20, 70);
+      doc.save(`reporte_completo_${new Date().toISOString().slice(0, 10)}.pdf`);
+      showNotification('Reporte PDF generado', 'success');
+    }
+
+    // Exportar mapa como imagen
+    function exportMapAsImage() {
+      html2canvas(document.getElementById('map')).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'mapa_seguimiento.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    // Dibujar recorrido en vivo
+    function dibujarRecorridoEnVivo() {
+      if (trackedPoints.length < 2) return;
+      const puntos = trackedPoints.map(p => [p.lat, p.lng]);
+      if (recorridoPolyline) {
+        recorridoPolyline.setLatLngs(puntos);
+      } else {
+        recorridoPolyline = L.polyline(puntos, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
       }
     }
-    const cobertura = Math.min(100, Math.round((puntos.length / 70000) * 100));
-    resultado.innerHTML = `✔ <b>${puntos.length}</b> usuarios cargados<br>📊 Cobertura: <b>${cobertura}%</b>`;
-    updateStats();
-    showNotification('Archivo procesado', 'success');
-  };
-  reader.readAsText(input.files[0]);
-}
 
-function downloadCoverageData() {
-  if (!trackedPoints.length) return showNotification('No hay datos', 'error');
-  const ws = XLSX.utils.json_to_sheet(trackedPoints);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Recorrido');
-  XLSX.writeFile(wb, 'recorrido.xlsx');
-  showNotification('Excel descargado', 'success');
-}
+    // Función para recibir coordenadas desde APKs (futuro emisor)
+    window.recibirCoordenadasExternas = function(data) {
+      const { lat, lng, idReciclador, nombre, vehiculo } = data;
+      if (!window.rutasExternas) window.rutasExternas = {};
+      if (!window.todosLosPuntos) window.todosLosPuntos = [];
 
-function generateReportPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(18).text('REPORTE - SOR-SR', 105, 20, { align: 'center' });
-  doc.setFontSize(12).text(`Rutas activas: ${routes.length}`, 20, 40);
-  doc.text(`Puntos registrados: ${trackedPoints.length}`, 20, 50);
-  doc.save('reporte_sor-sr.pdf');
-  showNotification('PDF generado', 'success');
-}
+      if (!window.rutasExternas[idReciclador]) {
+        const icono = L.divIcon({
+          html: `<div style="font-size:20px;">${getVehicleIcon(vehiculo)}</div>`,
+          className: '',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+        const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(`<b>${nombre}</b><br>En movimiento`);
+        window.rutasExternas[idReciclador] = {
+          marker,
+          polyline: L.polyline([], { color: 'green', weight: 3 }).addTo(map),
+          puntos: []
+        };
+      }
 
-function exportMapAsImage() {
-  html2canvas(document.getElementById('map')).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'mapa.png';
-    link.href = canvas.toDataURL();
-    link.click();
-  });
-}
+      window.rutasExternas[idReciclador].marker.setLatLng([lat, lng]);
+      window.rutasExternas[idReciclador].puntos.push([lat, lng]);
+      window.rutasExternas[idReciclador].polyline.setLatLngs(window.rutasExternas[idReciclador].puntos);
 
-function showNotification(msg, type) {
-  const n = document.getElementById('notification');
-  n.textContent = msg;
-  n.className = `notification ${type} show`;
-  setTimeout(() => n.classList.remove('show'), 3000);
-}
+      window.todosLosPuntos.push({ id: idReciclador, nombre, vehiculo, lat, lng, timestamp: new Date().toISOString() });
+      updateStats();
+      showNotification(`${nombre} ha iniciado su ruta`, 'success');
+    };
 
-document.addEventListener('DOMContentLoaded', initMap);
-</script>
+    // Inicializar sistema
+    document.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      setInterval(simulateGPSTracking, 3000);
+      setInterval(updateStats, 5000);
+      showNotification('Sistema SOR-SR iniciado correctamente', 'success');
+    });
+  </script>
 </body>
 </html>

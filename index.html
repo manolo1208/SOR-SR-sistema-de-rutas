@@ -409,6 +409,68 @@
       setTimeout(() => notification.classList.remove('show'), 3000);
     }
 
+function calcularCoberturaDesdeCSV() {
+  const input = document.getElementById('archivoRuta');
+  const resultado = document.getElementById('resultadoCobertura');
+  if (!input.files.length) return showNotification('Selecciona un archivo .csv', 'error');
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const data = e.target.result.split('\n');
+    const puntos = [];
+    for (let i = 1; i < data.length; i++) {
+      const [lat, lng] = data[i].split(',').map(Number);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        puntos.push({ lat, lng });
+        L.circleMarker([lat, lng], { radius: 4, color: "#2ecc71" }).addTo(map);
+        trackedPoints.push({ lat, lng });
+      }
+    }
+    const cobertura = Math.min(100, Math.round((puntos.length / 70000) * 100));
+    resultado.innerHTML = `✔ <b>${puntos.length}</b> usuarios cargados<br>📊 Cobertura: <b>${cobertura}%</b>`;
+    updateStats();
+    showNotification('Archivo procesado', 'success');
+  };
+  reader.readAsText(input.files[0]);
+}
+
+function downloadCoverageData() {
+  if (!trackedPoints.length) return showNotification('No hay datos', 'error');
+  const ws = XLSX.utils.json_to_sheet(trackedPoints);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Recorrido');
+  XLSX.writeFile(wb, 'recorrido.xlsx');
+  showNotification('Excel descargado', 'success');
+}
+
+function generateReportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18).text('REPORTE - SOR-SR', 105, 20, { align: 'center' });
+  doc.setFontSize(12).text(`Rutas activas: ${routes.length}`, 20, 40);
+  doc.text(`Puntos registrados: ${trackedPoints.length}`, 20, 50);
+  doc.save('reporte_sor-sr.pdf');
+  showNotification('PDF generado', 'success');
+}
+
+function exportMapAsImage() {
+  html2canvas(document.getElementById('map')).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'mapa.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
+
+function showNotification(msg, type) {
+  const n = document.getElementById('notification');
+  n.textContent = msg;
+  n.className = `notification ${type} show`;
+  setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+document.addEventListener('DOMContentLoaded', initMap);
+
+    
     // Descargar datos de recorrido
     function downloadCoverageData() {
       if (trackedPoints.length === 0) {
@@ -501,3 +563,4 @@
   </script>
 </body>
 </html>
+

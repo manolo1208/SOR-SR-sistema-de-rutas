@@ -13,10 +13,10 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f6f9; color: #333; }
     header { background: #2c3e50; color: white; padding: 10px; text-align: center; }
-    #map { height: 70vh; width: 100%; }
+    #map { height: 65vh; width: 100%; }
     .container { display: flex; flex-wrap: wrap; padding: 20px; gap: 20px; }
     .panel { flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .panel h2 { margin-top: 0; color: #2c3e50; }
+    .panel h2, .panel h3 { margin-top: 0; color: #2c3e50; }
     .stats { display: flex; justify-content: space-between; margin-top: 10px; }
     .stat { background: #ecf0f1; padding: 10px; border-radius: 8px; flex: 1; margin: 5px; text-align: center; }
     .stat i { font-size: 24px; margin-bottom: 5px; color: #27ae60; }
@@ -24,6 +24,9 @@
     .btn i { margin-right: 5px; }
     .btn:hover { background: #219150; }
     .notification { position: fixed; top: 20px; right: 20px; background: #27ae60; color: white; padding: 10px 20px; border-radius: 5px; display: none; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { font-weight: bold; display: block; margin-bottom: 5px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
   </style>
 </head>
 <body>
@@ -32,6 +35,7 @@
   </header>
   <div id="map"></div>
   <div class="container">
+    <!-- Panel Estadísticas -->
     <div class="panel">
       <h2><i class="fas fa-chart-line"></i> Estadísticas</h2>
       <div class="stats">
@@ -47,6 +51,8 @@
         </div>
       </div>
     </div>
+
+    <!-- Panel Control -->
     <div class="panel">
       <h2><i class="fas fa-cogs"></i> Control</h2>
       <button class="btn" onclick="startTracking()"><i class="fas fa-play"></i> Iniciar Seguimiento</button>
@@ -55,17 +61,57 @@
       <button class="btn" onclick="generateReportPDF()"><i class="fas fa-file-pdf"></i> Generar Reporte PDF</button>
       <button class="btn" onclick="exportMapAsImage()"><i class="fas fa-image"></i> Descargar Mapa</button>
     </div>
-   <div class="panel">
-  <h3><i class="fas fa-file-import"></i> Importar Recorrido (CSV)</h3>
-  <label for="archivoRuta">Archivo de coordenadas (.csv):</label>
-  <input type="file" id="archivoRuta" accept=".csv" class="form-control"/>
-  <button class="btn" style="background:#3498db; margin-top:10px;" onclick="calcularCoberturaDesdeCSV()">
-    <i class="fas fa-check-circle"></i> Calcular cobertura desde archivo
-  </button>
-  <div id="resultadoCobertura" style="margin-top:10px; font-weight:bold;"></div>
-</div>
-</div>
+
+    <!-- Panel Recorridos -->
+    <div class="panel">
+      <h3><i class="fas fa-file-import"></i> Importar Recorrido (CSV)</h3>
+      <input type="file" id="archivoRuta" accept=".csv"/>
+      <button class="btn" style="background:#3498db; margin-top:10px;" onclick="calcularCoberturaDesdeCSV()">
+        <i class="fas fa-check-circle"></i> Calcular cobertura desde archivo
+      </button>
+      <div id="resultadoCobertura" style="margin-top:10px; font-weight:bold;"></div>
+    </div>
+
+    <!-- Panel Planificación de Rutas -->
+    <div class="panel">
+      <h3><i class="fas fa-map-marked-alt"></i> Planificación de Rutas</h3>
+      <div class="form-group">
+        <label for="routeName">Nombre de la Ruta:</label>
+        <input type="text" id="routeName" placeholder="Ej: Zona Norte - Mañana">
+      </div>
+      <div class="form-group">
+        <label for="assignedRecycler">Reciclador Asignado:</label>
+        <select id="assignedRecycler">
+          <option value="">Seleccionar reciclador</option>
+          <option>Blanca Camacho Alfonso</option>
+          <option>Hernando Alfonso Carrillo Murillo</option>
+          <option>Adriano Castro Vega</option>
+          <option>Noralba Arias Rivera</option>
+          <option>Leonor De Jesús Orozco Suarez</option>
+          <option>Wilson José Ravelo Díaz</option>
+          <option>Talía Gomez Fuentes</option>
+          <option>José Manuel Díaz Agudelo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="vehicleType">Tipo de Vehículo:</label>
+        <select id="vehicleType">
+          <option value="cart">Carretilla</option>
+          <option value="bicycle">Bicicleta</option>
+          <option value="motorcycle">Motocicleta</option>
+          <option value="truck">Camión</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="barriosRuta">Barrios de la Ruta:</label>
+        <textarea id="barriosRuta" placeholder="Ej: El Centro, Primero de Mayo, La Paz" rows="2"></textarea>
+      </div>
+      <button class="btn" onclick="createRoute()" style="width:100%;">
+        <i class="fas fa-route"></i> Crear Ruta
+      </button>
+    </div>
   </div>
+
   <div class="notification" id="notification"></div>
 
   <script>
@@ -77,27 +123,64 @@
     let trackedPoints = [];
     let tracking = false;
     let watchId = null;
+    let routes = [];
 
+    // Íconos vehículos
+    function getVehicleIcon(tipo) {
+      return { cart:'🛒', bicycle:'🚲', motorcycle:'🏍️', truck:'🚛' }[tipo] || '🚗';
+    }
+
+    // Crear ruta activa
+    function createRoute() {
+      const name = document.getElementById('routeName').value;
+      const recycler = document.getElementById('assignedRecycler').value;
+      const vehicle = document.getElementById('vehicleType').value;
+      const barrios = document.getElementById('barriosRuta').value;
+
+      if (!name || !recycler) return showNotification("Completa todos los campos", "error");
+
+      const iconoVehiculo = L.divIcon({
+        html: `<div style="font-size: 22px;">${getVehicleIcon(vehicle)}</div>`,
+        className: '',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      const marker = L.marker([7.0653, -73.8547], { icon: iconoVehiculo }).addTo(map)
+        .bindPopup(`<b>${name}</b><br>Reciclador: ${recycler}<br>Vehículo: ${vehicle}<br>Barrios: ${barrios}`);
+
+      routes.push({ id: Date.now(), name, recycler, vehicle, barrios, marker });
+      showNotification("Ruta creada y activada en el mapa", "success");
+    }
+
+    // Notificaciones
+    function showNotification(message, type) {
+      const notif = document.getElementById('notification');
+      notif.textContent = message;
+      notif.style.background = type === 'error' ? '#e74c3c' : '#27ae60';
+      notif.style.display = 'block';
+      setTimeout(() => { notif.style.display = 'none'; }, 3000);
+    }
+
+    // Seguimiento real GPS
     function startTracking() {
       if (tracking) return showNotification('El seguimiento ya está activo', 'error');
       if (!navigator.geolocation) return showNotification('La geolocalización no está soportada', 'error');
       tracking = true;
       watchId = navigator.geolocation.watchPosition(pos => {
         const { latitude, longitude } = pos.coords;
-        const marker = L.circleMarker([latitude, longitude], { radius: 5, color: "#e74c3c" }).addTo(map);
         trackedPoints.push({ lat: latitude, lng: longitude });
+        L.circleMarker([latitude, longitude], { radius: 4, color: "#e74c3c" }).addTo(map);
         updateStats();
-      }, err => {
-        showNotification('Error al obtener la ubicación: ' + err.message, 'error');
       });
-      showNotification('Seguimiento iniciado', 'success');
+      showNotification("Seguimiento iniciado", "success");
     }
 
     function stopTracking() {
-      if (!tracking) return showNotification('El seguimiento no está activo', 'error');
+      if (!tracking) return showNotification("El seguimiento no está activo", "error");
       navigator.geolocation.clearWatch(watchId);
       tracking = false;
-      showNotification('Seguimiento detenido', 'success');
+      showNotification("Seguimiento detenido", "success");
     }
 
     function updateStats() {
@@ -112,7 +195,6 @@
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Cobertura");
       XLSX.writeFile(wb, "cobertura.xlsx");
-      showNotification('Datos exportados a Excel', 'success');
     }
 
     function generateReportPDF() {
@@ -123,7 +205,6 @@
       const cobertura = Math.min(100, Math.round((trackedPoints.length / 70000) * 100));
       doc.text("Cobertura: " + cobertura + "%", 20, 60);
       doc.save("reporte_cobertura.pdf");
-      showNotification('Reporte PDF generado', 'success');
     }
 
     function exportMapAsImage() {
@@ -133,41 +214,30 @@
         link.href = canvas.toDataURL();
         link.click();
       });
-      showNotification('Mapa descargado como imagen', 'success');
-    }
-
-    function showNotification(message, type) {
-      const notif = document.getElementById('notification');
-      notif.textContent = message;
-      notif.style.background = type === 'error' ? '#e74c3c' : '#27ae60';
-      notif.style.display = 'block';
-      setTimeout(() => { notif.style.display = 'none'; }, 3000);
     }
 
     function calcularCoberturaDesdeCSV() {
       const input = document.getElementById('archivoRuta');
-      const resultado = document.getElementById('resultadoCobertura');
-      if (!input.files.length) return showNotification('Selecciona un archivo .csv', 'error');
+      if (!input.files.length) return showNotification("Selecciona un archivo CSV", "error");
       const reader = new FileReader();
-      reader.onload = function (e) {
+      reader.onload = function(e) {
         const data = e.target.result.split('\n');
         const puntos = [];
-        for (let i = 1; i < data.length; i++) {
-          const [lat, lng] = data[i].split(',').map(Number);
+        for (let i=1;i<data.length;i++) {
+          const [lat,lng] = data[i].split(',').map(Number);
           if (!isNaN(lat) && !isNaN(lng)) {
-            puntos.push({ lat, lng });
-            L.circleMarker([lat, lng], { radius: 4, color: "#2ecc71" }).addTo(map);
-            trackedPoints.push({ lat, lng });
+            puntos.push({lat,lng});
+            L.circleMarker([lat,lng], { radius:4, color:"#2ecc71" }).addTo(map);
+            trackedPoints.push({lat,lng});
           }
         }
         const cobertura = Math.min(100, Math.round((puntos.length / 70000) * 100));
-        resultado.innerHTML = `✔ <b>${puntos.length}</b> usuarios cargados<br>📊 Cobertura: <b>${cobertura}%</b>`;
+        document.getElementById('resultadoCobertura').innerHTML = 
+          `✔ <b>${puntos.length}</b> usuarios cargados<br>📊 Cobertura: <b>${cobertura}%</b>`;
         updateStats();
-        showNotification('Archivo procesado', 'success');
       };
       reader.readAsText(input.files[0]);
     }
   </script>
 </body>
 </html>
-
